@@ -27,7 +27,7 @@ primus.on 'data', ({type, payload}) ->
       $('sidebar').show()
       primus.write type: 'ircMembers', payload: {}
 
-      pc = new webkitRTCPeerConnection({ "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] })
+      pc = new RTCPeerConnection({ "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] })
 
       gotStream = (stream) ->
         video = document.createElement('video')
@@ -47,7 +47,7 @@ primus.on 'data', ({type, payload}) ->
           pc.setLocalDescription(offer)
           primus.write type: 'offer', payload: {offer: offer.sdp}
 
-      navigator.webkitGetUserMedia(constraints, gotStream)
+      getUserMedia(constraints, gotStream)
 
       postMessage('Connected to channel')
     when 'ircMembers'
