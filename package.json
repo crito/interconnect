@@ -34,7 +34,7 @@
     "npm": "1.3"
   },
   "scripts": {
-    "start": "cake server"
+    "start": "node_modules/.bin/cake server"
   },
   "dependencies": {
     "docpad": "~6.55.5",
