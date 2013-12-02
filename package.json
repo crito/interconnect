@@ -37,7 +37,7 @@
     "start": "node_modules/.bin/cake server"
   },
   "dependencies": {
-    "docpad": "~6.55.5",
+    "docpad": "~6.56.0",
     "docpad-plugin-coffeescript": "~2.2.3",
     "docpad-plugin-eco": "~2.0.2",
     "docpad-plugin-marked": "~2.1.2",
