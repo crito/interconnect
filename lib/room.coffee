@@ -6,10 +6,10 @@ class Room
   constructor: (@spark) ->
 
   join: (@nick, @channel) ->
-    @channel = "##{channel}" unless channel[0] is "#"
+    @channel = "##{@channel}" unless @channel[0] is "#"
     @irc = irc.join(@nick, @channel)
-    @spark.join(@channel, -> debug "Joined #{@channel}")
-    @spark.join("#{@channel}/#{@nick}", ->
+    @spark.join(@channel, => debug "Joined #{@channel}")
+    @spark.join("#{@channel}/#{@nick}", =>
       debug "Spark joined room #{@channel}/#{@nick}")
 
     @irc.on 'join', =>
@@ -24,7 +24,7 @@ class Room
     @
 
   leave: (msg) ->
-    @irc.quit()
+    @irc.quit("Goodbye")
     # leave webrtc
 
     @
@@ -47,6 +47,18 @@ class Room
       @spark.write(
         type: 'ircMembers',
         payload: (name for name in names when name isnt @nick)))
+    @
+
+  rtcMembers: () ->
+    console.log @channel
+    @spark.room(@channel).write(
+      type: 'ping'
+      payload:
+        sender: "#{@channel}/#{@nick}")
+    @
+
+  pong: (sender) ->
+    console.log "Ping from #{sender}"
     @
 
 module.exports = Room

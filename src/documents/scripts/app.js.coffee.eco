@@ -55,7 +55,8 @@ primus.on 'data', ({type, payload}) ->
       $('#ircMembers').append("<li>#{name}</li>") for name in payload
     when 'message'
       postMessage(payload)
-
+    when 'ping'
+      primus.write type: 'pong', payload: {}
 
 $('#connect').click(->
   nick = $('#nick').attr("disabled", true).val()

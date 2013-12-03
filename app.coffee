@@ -45,32 +45,26 @@ app.configure 'development', ->
 
 primus.on 'connection', (spark) ->
   debug 'connected'
-  session = undefined
   room = new Room(spark)
 
   spark.on 'data', ({type,payload}) ->
+    console.log type, payload
     switch type
       when 'join'
-        # session = corocket.join(payload.nick, payload.channel, spark)
         room.join(payload.nick, payload.channel)
+          .rtcMembers()
       when 'say', 'away', 'leave', 'busy'
-        # session[type](payload.msg)
         room[type](payload.msg)
       when 'ircMembers'
-        # session[type]()
         room[type]()
       when 'msgUser'
         debug paylod.msg
+      when 'pong'
+        room.pong(payload.sender)
       else
         debug payload[type]
 
   spark.on 'end', ->
-    # session?.leave('Goodbye')
     room?.leave("Goodbye")
-
-  setTimeout ->
-    spark.room("#corocketme").write ({type: 'say', payload: {msg: 'hahaha'}})
-    spark.room("#corocketme/crito42").write(type: 'msgUser', payload: {msg: spark.id})
-  , 10000
 
 server.listen app.get('port')
