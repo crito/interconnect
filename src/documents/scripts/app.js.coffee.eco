@@ -3,6 +3,20 @@
 # conf = require './conf-<%- @conf %>'
 {joinRoom, sendMessage} = require './messages'
 
+class RTCMembers extends Backbone.View
+  events:
+    '#rtcMember': (ev) =>
+      @trigger('pingRtcMember')
+
+  initialize: ->
+    @model.on 'reset', @render, @
+    @render
+
+  render: ->
+    $('#rtcMembers').empty()
+    @model.users.each((user) =>
+      $('#rtcMembers').append("<li id='rtcMember'>#{user.get('nick')}</li>"))
+
 class User extends Backbone.Model
   communityID: ->
     "#{this.get('channel')}/#{this.get('nick')}"
@@ -22,10 +36,13 @@ class Room extends Backbone.Model
 
   pingFromUser: (sender) ->
     [channel, nick] = sender.split('/')
-    @users.add([{nick: nick, channel: channel}]) unless @users.findWhere(nick: nick)
+    if !@users.findWhere(nick: nick)
+      @users.add([{nick: nick, channel: channel}])
+      @trigger('reset')
 
 room = new Room()
 user = new User()
+rtcList = new RTCMembers(model: room)
 
 # constraints =
 #   audio: true
@@ -75,7 +92,7 @@ primus.on 'data', ({type, payload}) ->
       setInterval(=>
         primus.write(type: 'alive', payload:
           sender: user.communityID())
-      , 5000)
+      , 1000)
 
       postMessage('Connected to channel')
     when 'ircMembers'
