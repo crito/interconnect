@@ -54,5 +54,11 @@ class Room
       type: 'living'
       payload: payload)
 
+  pingRtcMember: (payload) ->
+    debug "Ping #{payload.receiver} from #{payload.sender}"
+    @spark.room(payload.receiver).write(
+      type: 'ping'
+      payload:
+        sender: payload.sender)
 
 module.exports = Room

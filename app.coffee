@@ -58,7 +58,7 @@ primus.on 'connection', (spark) ->
         room[type]()
       when 'msgUser'
         debug paylod.msg
-      when 'alive'
+      when 'alive', 'pingRtcMember'
         room[type](payload)
       else
         debug payload[type]

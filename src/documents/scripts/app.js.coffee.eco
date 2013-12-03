@@ -5,8 +5,10 @@
 
 class RTCMembers extends Backbone.View
   events:
-    '#rtcMember': (ev) =>
-      @trigger('pingRtcMember')
+    'click #rtcMember': 'pingMember'
+
+  pingMember: (ev) =>
+    @trigger('pingRtcMember', @model.users.findWhere(nick: $(ev.target).text()))
 
   initialize: ->
     @model.on 'reset', @render, @
@@ -42,7 +44,7 @@ class Room extends Backbone.Model
 
 room = new Room()
 user = new User()
-rtcList = new RTCMembers(model: room)
+rtcList = new RTCMembers(model: room, el: "#rtcMembers")
 
 # constraints =
 #   audio: true
@@ -66,6 +68,15 @@ primus.on 'data', ({type, payload}) ->
       $('#connectionBox').hide()
       $('#chatWindow').show()
       $('sidebar').show()
+
+      rtcList.on('pingRtcMember', (member) =>
+        console.log "ping #{member.get('nick')}"
+        primus.write(
+          type: 'pingRtcMember',
+          payload: 
+            receiver: member.communityID()
+            sender: user.communityID()))
+
       primus.write(type: 'ircMembers', payload: {})
 
       # pc = new RTCPeerConnection({ "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] })
@@ -92,7 +103,7 @@ primus.on 'data', ({type, payload}) ->
       setInterval(=>
         primus.write(type: 'alive', payload:
           sender: user.communityID())
-      , 1000)
+      , 5000)
 
       postMessage('Connected to channel')
     when 'ircMembers'
@@ -103,6 +114,8 @@ primus.on 'data', ({type, payload}) ->
     when 'living'
       room.pingFromUser(payload.sender)
       # $('#rtcMembers').append("<li>#{payload.sender}</li>")
+    when 'ping'
+      console.log("Ping from #{payload.sender}")
 
 $('#connect').click(->
   nick = $('#nick').attr("disabled", true).val()
