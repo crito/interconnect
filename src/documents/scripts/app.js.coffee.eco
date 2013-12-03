@@ -3,6 +3,30 @@
 # conf = require './conf-<%- @conf %>'
 {joinRoom, sendMessage} = require './messages'
 
+class User extends Backbone.Model
+  communityID: ->
+    "#{this.get('channel')}/#{this.get('nick')}"
+
+class Users extends Backbone.Collection
+  model: User
+  initialize: ->
+    @on 'add', (model) ->
+      console.log "Model for #{model.get('nick')} added."
+
+class Room extends Backbone.Model
+  initialize: ->
+    @users = new Users()
+
+  toJSON: (options) ->
+    _.extend(super, users: @users.toJSON())
+
+  pingFromUser: (sender) ->
+    [channel, nick] = sender.split('/')
+    @users.add([{nick: nick, channel: channel}]) unless @users.findWhere(nick: nick)
+
+room = new Room()
+user = new User()
+
 # constraints =
 #   audio: true
 #   video:
@@ -50,7 +74,7 @@ primus.on 'data', ({type, payload}) ->
       # getUserMedia(constraints, gotStream)
       setInterval(=>
         primus.write(type: 'alive', payload:
-          sender: "#{window.channel}/#{window.nick}")
+          sender: user.communityID())
       , 5000)
 
       postMessage('Connected to channel')
@@ -60,19 +84,16 @@ primus.on 'data', ({type, payload}) ->
     when 'message'
       postMessage(payload)
     when 'living'
-      console.log payload
-      $('#rtcMembers').append("<li>#{payload.sender}</li>")
-
-
+      room.pingFromUser(payload.sender)
+      # $('#rtcMembers').append("<li>#{payload.sender}</li>")
 
 $('#connect').click(->
   nick = $('#nick').attr("disabled", true).val()
   channel = $('#channel').attr("disabled", true).val()
   channel = "##{channel}" unless channel[0] is "#"
+  user.set(nick: nick, channel: channel)
   $('#connect').addClass('loading')
-  primus.write(joinRoom channel, nick)
-  window.nick = nick
-  window.channel = channel)
+  primus.write(joinRoom channel, nick))
 
 $('#send').click(->
   msg = $('#message').val()
