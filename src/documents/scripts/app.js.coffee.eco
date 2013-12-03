@@ -3,19 +3,19 @@
 # conf = require './conf-<%- @conf %>'
 {joinRoom, sendMessage} = require './messages'
 
-constraints =
-  audio: true
-  video:
-    mandatory:
-      maxWidth: 640
-      maxHeight: 360
-    optional: []
+# constraints =
+#   audio: true
+#   video:
+#     mandatory:
+#       maxWidth: 640
+#       maxHeight: 360
+#     optional: []
 
 postMessage = (msg) ->
-    $messages = $('#messages')
-    $message = $("<div class='ui small message'><p>#{msg}</p></div>")
-    $messages.append($message)
-    $message.ScrollTo()
+  $messages = $('#messages')
+  $message = $("<div class='ui small message'><p>#{msg}</p></div>")
+  $messages.append($message)
+  $message.ScrollTo()
 
 primus = Primus.connect '<%- @site.url %>', {}
 
@@ -25,29 +25,33 @@ primus.on 'data', ({type, payload}) ->
       $('#connectionBox').hide()
       $('#chatWindow').show()
       $('sidebar').show()
-      primus.write type: 'ircMembers', payload: {}
+      primus.write(type: 'ircMembers', payload: {})
 
-      pc = new RTCPeerConnection({ "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] })
+      # pc = new RTCPeerConnection({ "iceServers": [{ "url": "stun:stun.l.google.com:19302" }] })
 
-      gotStream = (stream) ->
-        video = document.createElement('video')
-        video.setAttribute('autoplay', true)
-        video.setAttribute('muted', true)
-        if (typeof video.mozSrcObject != 'undefined')
-          video.mozSrcObject = stream
-        else
-          video.src = URL.createObjectURL(stream)
+      # gotStream = (stream) ->
+      #   video = document.createElement('video')
+      #   video.setAttribute('autoplay', true)
+      #   video.setAttribute('muted', true)
+      #   if (typeof video.mozSrcObject != 'undefined')
+      #     video.mozSrcObject = stream
+      #   else
+      #     video.src = URL.createObjectURL(stream)
 
-        sidebar = document.getElementById('you')
-        sidebar.appendChild(video)
-        video.style.zoom = 0.25
+      #   sidebar = document.getElementById('you')
+      #   sidebar.appendChild(video)
+      #   video.style.zoom = 0.25
 
-        pc.addStream(stream)
-        pc.createOffer (offer) ->
-          pc.setLocalDescription(offer)
-          primus.write type: 'offer', payload: {offer: offer.sdp}
+      #   pc.addStream(stream)
+      #   pc.createOffer (offer) ->
+      #     pc.setLocalDescription(offer)
+      #     primus.write type: 'offer', payload: {offer: offer.sdp}
 
-      getUserMedia(constraints, gotStream)
+      # getUserMedia(constraints, gotStream)
+      setInterval(=>
+        primus.write(type: 'alive', payload:
+          sender: "#{window.channel}/#{window.nick}")
+      , 5000)
 
       postMessage('Connected to channel')
     when 'ircMembers'
@@ -55,23 +59,27 @@ primus.on 'data', ({type, payload}) ->
       $('#ircMembers').append("<li>#{name}</li>") for name in payload
     when 'message'
       postMessage(payload)
-    when 'ping'
-      primus.write type: 'pong', payload: {}
+    when 'living'
+      console.log payload
+      $('#rtcMembers').append("<li>#{payload.sender}</li>")
+
+
 
 $('#connect').click(->
   nick = $('#nick').attr("disabled", true).val()
   channel = $('#channel').attr("disabled", true).val()
+  channel = "##{channel}" unless channel[0] is "#"
   $('#connect').addClass('loading')
-  primus.write joinRoom channel, nick
-)
+  primus.write(joinRoom channel, nick)
+  window.nick = nick
+  window.channel = channel)
 
 $('#send').click(->
   msg = $('#message').val()
   data = type: 'say', payload: {msg: msg}
   primus.write(data)
   postMessage("You: #{msg}")
-  $('#message').val('')
-)
+  $('#message').val(''))
 
 # media = require('rtc-media')
 # canvas = require('rtc-canvas')

@@ -52,15 +52,14 @@ primus.on 'connection', (spark) ->
     switch type
       when 'join'
         room.join(payload.nick, payload.channel)
-          .rtcMembers()
       when 'say', 'away', 'leave', 'busy'
         room[type](payload.msg)
       when 'ircMembers'
         room[type]()
       when 'msgUser'
         debug paylod.msg
-      when 'pong'
-        room.pong(payload.sender)
+      when 'alive'
+        room[type](payload)
       else
         debug payload[type]
 

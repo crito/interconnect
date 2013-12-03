@@ -26,7 +26,6 @@ class Room
   leave: (msg) ->
     @irc.quit("Goodbye")
     # leave webrtc
-
     @
 
   say: (msg) ->
@@ -49,16 +48,11 @@ class Room
         payload: (name for name in names when name isnt @nick)))
     @
 
-  rtcMembers: () ->
-    console.log @channel
+  alive: (payload) ->
+    debug "Alive from #{payload.sender}"
     @spark.room(@channel).write(
-      type: 'ping'
-      payload:
-        sender: "#{@channel}/#{@nick}")
-    @
+      type: 'living'
+      payload: payload)
 
-  pong: (sender) ->
-    console.log "Ping from #{sender}"
-    @
 
 module.exports = Room
